@@ -100,6 +100,10 @@ namespace ExportAgency
             ExportAgencyMod.Settings.GetHashCode();
         }
 
+        public static readonly Texture2D IMPORT_TEXTURE = ContentFinder<Texture2D>.Get("ExportAgency/Import");
+
+        public static readonly Texture2D EXPORT_TEXTURE = ContentFinder<Texture2D>.Get("ExportAgency/Export");
+
         public static void ExportGizmos(object __instance, ref IEnumerable<Gizmo> __result)
         {
             if (__instance is IBillGiver billGiver)
@@ -109,8 +113,8 @@ namespace ExportAgency
                     {
                         action = () =>
                             ExportBillStack(stack: billGiver.BillStack),
-                        defaultLabel = "Copy",
-                        icon         = TexCommand.Attack
+                        defaultLabel = "Export",
+                        icon         = EXPORT_TEXTURE
                     });
                 if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.BILL) && ExportAgencyMod.Settings.dictionary[key: ExportType.BILL].Any())
                     __result = __result.Add(item: new Command_Action
@@ -118,8 +122,8 @@ namespace ExportAgency
                         action = () => Find.WindowStack.Add(window: new FloatMenu(options: ExportAgencyMod.Settings.dictionary[key: ExportType.BILL]
                            .Where(predicate: li => li.Cast<Bill>().Any(predicate: bi => ((Thing) __instance).def.AllRecipes.Contains(item: bi.recipe)))
                            .Select(selector: li => new FloatMenuOption(label: li.Name, action: () => PasteBillStack(billGiver: billGiver, bills: li))).ToList())),
-                        defaultLabel = "Paste",
-                        icon         = TexCommand.AttackMelee
+                        defaultLabel = "Import",
+                        icon         = IMPORT_TEXTURE
                     });
             }
 
