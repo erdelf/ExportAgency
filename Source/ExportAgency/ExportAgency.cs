@@ -116,7 +116,8 @@ namespace ExportAgency
                         defaultLabel = "Export",
                         icon         = EXPORT_TEXTURE
                     });
-                if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.BILL) && ExportAgencyMod.Settings.dictionary[key: ExportType.BILL].Any())
+                if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.BILL) && 
+                    ExportAgencyMod.Settings.dictionary[key: ExportType.BILL].Any(predicate: li => li.Cast<Bill>().Any(predicate: bi => ((Thing) __instance).def.AllRecipes.Contains(item: bi.recipe))))
                     __result = __result.Add(item: new Command_Action
                     {
                         action = () => Find.WindowStack.Add(window: new FloatMenu(options: ExportAgencyMod.Settings.dictionary[key: ExportType.BILL]
