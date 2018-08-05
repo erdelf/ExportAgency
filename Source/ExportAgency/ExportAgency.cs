@@ -100,9 +100,9 @@ namespace ExportAgency
             ExportAgencyMod.Settings.GetHashCode();
         }
 
-        public static readonly Texture2D IMPORT_TEXTURE = ContentFinder<Texture2D>.Get("ExportAgency/Import");
+        public static readonly Texture2D IMPORT_TEXTURE = ContentFinder<Texture2D>.Get(itemPath: "ExportAgency/Import");
 
-        public static readonly Texture2D EXPORT_TEXTURE = ContentFinder<Texture2D>.Get("ExportAgency/Export");
+        public static readonly Texture2D EXPORT_TEXTURE = ContentFinder<Texture2D>.Get(itemPath: "ExportAgency/Export");
 
         public static void ExportGizmos(object __instance, ref IEnumerable<Gizmo> __result)
         {
@@ -265,6 +265,7 @@ namespace ExportAgency
             Find.WindowStack.Add(window: new Dialog_RenameExportName(key: ExportType.BILL, list: stack.Bills.Select(selector: bi =>
             {
                 Bill bill = bi.Clone();
+                bill.pawnRestriction = null;
                 Traverse.Create(root: bill).Field<int>(name: "loadID").Value = int.MinValue;
                 return bill;
             }).OfType<IExposable>()));
