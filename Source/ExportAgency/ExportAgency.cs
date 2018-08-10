@@ -137,17 +137,18 @@ namespace ExportAgency
                     defaultLabel = "Copy",
                     icon         = TexCommand.Attack
                 });
-                __result = __result.Add(item: new Command_Action
-                {
-                    action = () =>
+                if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.STORAGE_SETTINGS))
+                    __result = __result.Add(item: new Command_Action
                     {
-                        Find.WindowStack.Add(window: new FloatMenu(options: ExportAgencyMod.Settings.dictionary[key: ExportType.STORAGE_SETTINGS]
-                           .Select(selector: li => new FloatMenuOption(label: li.Name, action: () =>
-                                PasteStorageSettings(storeParent: storeParent, settings: (StorageSettings) li.First()))).ToList()));
-                    },
-                    defaultLabel = "Paste",
-                    icon         = TexCommand.AttackMelee
-                });
+                        action = () =>
+                        {
+                            Find.WindowStack.Add(window: new FloatMenu(options: ExportAgencyMod.Settings.dictionary[key: ExportType.STORAGE_SETTINGS]
+                               .Select(selector: li => new FloatMenuOption(label: li.Name, action: () =>
+                                    PasteStorageSettings(storeParent: storeParent, settings: (StorageSettings) li.First()))).ToList()));
+                        },
+                        defaultLabel = "Paste",
+                        icon         = TexCommand.AttackMelee
+                    });
             }
         }
 
