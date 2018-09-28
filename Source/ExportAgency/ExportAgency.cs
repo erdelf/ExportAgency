@@ -18,38 +18,6 @@ namespace ExportAgency
         DRUGPOLICY
     }
 
-    public class ExportSettings : ModSettings
-    {
-        public Dictionary<ExportType, ExposableList<ExposableList<IExposable>>> dictionary = new Dictionary<ExportType, ExposableList<ExposableList<IExposable>>>();
-        public int defaultDrugPolicyIndex;
-
-
-        public override void ExposeData()
-        {
-            base.ExposeData();
-            Scribe_Collections.Look(dict: ref this.dictionary, label: "exposeDictionary", valueLookMode: LookMode.Deep);
-            Scribe_Values.Look(value: ref this.defaultDrugPolicyIndex, label: "defaultDrugPolicyIndex");
-        }
-    }
-
-    public class ExportAgencyMod : Mod
-    {
-        private static ExportSettings  settings;
-        public static  ExportAgencyMod instance;
-
-
-
-        public static ExportSettings Settings => settings ?? (settings = instance.GetSettings<ExportSettings>());
-
-        public ExportAgencyMod(ModContentPack content) : base(content: content) => instance = this;
-
-        public override void DoSettingsWindowContents(Rect inRect)
-        {
-            base.DoSettingsWindowContents(inRect: inRect);
-            this.WriteSettings();
-        }
-    }
-
     [StaticConstructorOnStartup]
     public class ExportAgency
     {
