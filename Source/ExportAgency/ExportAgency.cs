@@ -1,6 +1,7 @@
 ﻿using Harmony;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Linq;
 using Verse;
 using RimWorld;
@@ -26,10 +27,17 @@ namespace ExportAgency
             HarmonyInstance harmony     = HarmonyInstance.Create(id: "rimworld.erdelf.exportAgency");
             HarmonyMethod   exportGizmo = new HarmonyMethod(type: typeof(ExportAgency), name: nameof(ExportGizmos));
 
+            //GetGizmos is not a method on IBillGiver or IStoreSettingsParent, so we need to sort out which declaring Classes to actually patch:
+            //Keep a list and AddDistinct so it doesn't double-patch the same parent class if two children use the interface
+            List<MethodInfo> trueGetGizmoMethods = new List<MethodInfo>();
+
         #region Bills
 
             foreach (Type t in GenTypes.AllTypes.Where(predicate: t => t.GetInterfaces().Contains(value: typeof(IBillGiver)) && !t.IsInterface && !t.IsAbstract))
-                harmony.Patch(original: AccessTools.Method(type: t, name: nameof(Thing.GetGizmos)), prefix: null, postfix: exportGizmo);
+            {
+                MethodInfo originalMethod = AccessTools.Method(type: t, name: nameof(Thing.GetGizmos));
+                trueGetGizmoMethods.AddDistinct(AccessTools.Method(type: originalMethod.DeclaringType, name: nameof(Thing.GetGizmos)));
+            }
             harmony.Patch(original: AccessTools.Method(type: typeof(Bill), name: nameof(Bill.GetUniqueLoadID)), prefix: null,
                 postfix: new HarmonyMethod(type: typeof(ExportAgency), name: nameof(BillUniqueIdPostfix)));
 
@@ -39,9 +47,16 @@ namespace ExportAgency
 
             foreach (Type t in GenTypes.AllTypes.Where(predicate: t =>
                 t.GetInterfaces().Contains(value: typeof(IStoreSettingsParent)) && !t.IsInterface && !t.IsAbstract && AccessTools.Method(type: t, name: nameof(Thing.GetGizmos)) != null))
-                harmony.Patch(original: AccessTools.Method(type: t, name: nameof(Thing.GetGizmos)), prefix: null, postfix: exportGizmo);
-
+            {
+                MethodInfo originalMethod = AccessTools.Method(type: t, name: nameof(Thing.GetGizmos));
+                trueGetGizmoMethods.AddDistinct(AccessTools.Method(type: originalMethod.DeclaringType, name: nameof(Thing.GetGizmos)));
+            }
+            
         #endregion
+
+            foreach (MethodInfo method in trueGetGizmoMethods)
+                harmony.Patch(original: method, prefix: null, postfix: exportGizmo);
+            
 
         #region Outfits
 
