@@ -18,6 +18,7 @@ namespace ExportAgency
         {
             base.ExposeData();
             Scribe_Collections.Look(dict: ref this.dictionary, label: "exposeDictionary", valueLookMode: LookMode.Deep);
+
             Scribe_Values.Look(value: ref this.defaultDrugPolicyIndex, label: "defaultDrugPolicyIndex");
         }
     }
@@ -48,14 +49,12 @@ namespace ExportAgency
 
             Widgets.BeginScrollView(outRect: inRect.BottomPart(pct: 0.9f).TopPart(pct: 0.9f), scrollPosition: ref this.scrollPosition,
                 viewRect: new Rect(x: inRect.x, y: inRect.y, width: inRect.width-18f, height: (exposableList.Count+1) * 25));
-
-            Log.Message(exposableList.First().Name + " | " + exposableList.Last().Name);
-
+            
             for (int i = 2; i < exposableList.Count+2; i++)
             {
                 Widgets.DrawLineHorizontal(x: 0, y: i * 25f, length: inRect.width-18f);
                 Widgets.Label(rect: new Rect(x: 0, y: i * 25f + 2.5f, width: inRect.width *0.3f, height: 20f), 
-                    label: exposableList[index: i-2].Name);
+                    label: exposableList[index: i-2].exposable.Name);
                 if (!Widgets.ButtonImage(butRect: new Rect(x: inRect.width - 18f - 20f, y: i * 25f + 2.5f, width: 20f, height: 20f),
                         tex: TexCommand.RemoveRoutePlannerWaypoint)) continue;
                 exposableList.Remove(item: exposableList[index: i-2]);

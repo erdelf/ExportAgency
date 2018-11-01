@@ -95,12 +95,12 @@ namespace ExportAgency
                         icon         = EXPORT_TEXTURE
                     });
                 if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.BILL) && 
-                    ExportAgencyMod.Settings.dictionary[key: ExportType.BILL].Any(predicate: li => li.Cast<Bill>().Any(predicate: bi => ((Thing) __instance).def.AllRecipes.Contains(item: bi.recipe))))
+                    ExportAgencyMod.Settings.dictionary[key: ExportType.BILL].Any(predicate: li => li.exposable.Cast<Bill>().Any(predicate: bi => ((Thing) __instance).def.AllRecipes.Contains(item: bi.recipe))))
                     __result = __result.Add(item: new Command_Action
                     {
                         action = () => Find.WindowStack.Add(window: new FloatMenu(options: ExportAgencyMod.Settings.dictionary[key: ExportType.BILL]
-                           .Where(predicate: li => li.Cast<Bill>().Any(predicate: bi => ((Thing) __instance).def.AllRecipes.Contains(item: bi.recipe)))
-                           .Select(selector: li => new FloatMenuOption(label: li.Name, action: () => PasteBillStack(billGiver: billGiver, bills: li))).ToList())),
+                           .Where(predicate: li => li.exposable.Cast<Bill>().Any(predicate: bi => ((Thing) __instance).def.AllRecipes.Contains(item: bi.recipe)))
+                           .Select(selector: li => new FloatMenuOption(label: li.exposable.Name, action: () => PasteBillStack(billGiver: billGiver, bills: li.exposable.Select(exp => exp.exposable)))).ToList())),
                         defaultLabel = "Import",
                         icon         = IMPORT_TEXTURE
                     });
@@ -121,8 +121,8 @@ namespace ExportAgency
                         action = () =>
                         {
                             Find.WindowStack.Add(window: new FloatMenu(options: ExportAgencyMod.Settings.dictionary[key: ExportType.STORAGE_SETTINGS]
-                               .Select(selector: li => new FloatMenuOption(label: li.Name, action: () =>
-                                    PasteStorageSettings(storeParent: storeParent, settings: (StorageSettings) li.First()))).ToList()));
+                               .Select(selector: li => new FloatMenuOption(label: li.exposable.Name, action: () =>
+                                    PasteStorageSettings(storeParent: storeParent, settings: (StorageSettings) li.exposable.First().exposable))).ToList()));
                         },
                         defaultLabel = "Paste",
                         icon         = TexCommand.AttackMelee
@@ -179,7 +179,7 @@ namespace ExportAgency
             {
                 DrugPolicy policy = __instance.MakeNewDrugPolicy();
                 for (int i = 0; i < li.Count; i++)
-                    policy[index: i] = li[index: i] as DrugPolicyEntry;
+                    policy[index: i] = li[index: i].exposable as DrugPolicyEntry;
                 policy.label  = li.Name;
             }
         }
@@ -205,7 +205,7 @@ namespace ExportAgency
             foreach (ExposableList<IExposable> li in ExportAgencyMod.Settings.dictionary[key: ExportType.OUTFIT])
             {
                 Outfit outfit = __instance.MakeNewOutfit();
-                outfit.filter = (ThingFilter) li.First();
+                outfit.filter = (ThingFilter) li.First().exposable;
                 outfit.label  = li.Name;
             }
         }
@@ -279,13 +279,13 @@ namespace ExportAgency
         }
     }
 
-    public class ExposableList<T> : List<T>, IExposable where T : IExposable
+    public class ExposableList<T> : List<ExposableListItem<T>>, IExposable where T : IExposable
     {
         public ExposableList() : base(capacity: 1)
         {
         }
 
-        public ExposableList(IEnumerable<T> exposables) : base(collection: exposables)
+        public ExposableList(IEnumerable<T> exposables) : base(collection: exposables.Select(selector: exp => new ExposableListItem<T>(exp)))
         {
         }
 
@@ -297,11 +297,41 @@ namespace ExportAgency
             Scribe_Values.Look(value: ref name, label: "name");
             this.Name = name;
 
-            List<T> list = this.ListFullCopy();
+            List<ExposableListItem<T>> list = this.ListFullCopy();
             Scribe_Collections.Look(list: ref list, label: "internalList");
             this.Clear();
-            this.AddRange(collection: list);
+            this.AddRange(collection: list.Where(predicate: exp => exp.resolvable));
         }
+
+        internal void Add(T item) => base.Add(item: new ExposableListItem<T>(exposable: item));
+    }
+
+    public class ExposableListItem<T> : IExposable where T : IExposable
+    {
+        public T exposable;
+        public bool resolvable;
+
+        public ExposableListItem()
+        {
+        }
+
+        public ExposableListItem(T exposable) => this.exposable = exposable;
+
+        public void ExposeData()
+        {
+            try
+            {
+                Scribe_Deep.Look(target: ref this.exposable, label: "exposable");
+                this.resolvable = true;
+            }
+            catch
+            {
+                this.resolvable = false;
+                Log.Message(text: $"Found unresolvable {typeof(T).FullName} in exported List");
+            }
+        }
+
+        public static implicit operator T(ExposableListItem<T> exp) => exp.exposable;
     }
 
     internal class Dialog_RenameExportName : Dialog_Rename
