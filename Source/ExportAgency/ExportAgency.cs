@@ -95,11 +95,11 @@ namespace ExportAgency
                         icon         = EXPORT_TEXTURE
                     });
                 if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.BILL) && 
-                    ExportAgencyMod.Settings.dictionary[key: ExportType.BILL].Any(predicate: li => li.exposable.Cast<Bill>().Any(predicate: bi => ((Thing) __instance).def.AllRecipes.Contains(item: bi.recipe))))
+                    ExportAgencyMod.Settings.dictionary[key: ExportType.BILL].Any(predicate: li => li.exposable.Select(exp => (Bill) exp.exposable).Any(predicate: bi => ((Thing) __instance).def.AllRecipes.Contains(item: bi.recipe))))
                     __result = __result.Add(item: new Command_Action
                     {
                         action = () => Find.WindowStack.Add(window: new FloatMenu(options: ExportAgencyMod.Settings.dictionary[key: ExportType.BILL]
-                           .Where(predicate: li => li.exposable.Cast<Bill>().Any(predicate: bi => ((Thing) __instance).def.AllRecipes.Contains(item: bi.recipe)))
+                           .Where(predicate: li => li.exposable.Select(exp => (Bill) exp.exposable).Any(predicate: bi => ((Thing) __instance).def.AllRecipes.Contains(item: bi.recipe)))
                            .Select(selector: li => new FloatMenuOption(label: li.exposable.Name, action: () => PasteBillStack(billGiver: billGiver, bills: li.exposable.Select(exp => exp.exposable)))).ToList())),
                         defaultLabel = "Import",
                         icon         = IMPORT_TEXTURE
