@@ -29,12 +29,8 @@ namespace ExportAgency
 
             #region Bills
 
-            foreach (Type t in GenTypes.AllTypes.Where(predicate: t => t.GetInterfaces().Contains(value: typeof(IBillGiver)) && !t.IsInterface && !t.IsAbstract))
-            {
-                MethodInfo original = AccessTools.Method(type: t, name: nameof(Thing.GetGizmos));
-                if(original?.DeclaringType == t)
-                    harmony.Patch(original: original, prefix: null, postfix: exportGizmo);
-            }
+
+            harmony.Patch(original: AccessTools.Method(type: typeof(ThingWithComps), name: nameof(Thing.GetGizmos)), prefix: null, postfix: exportGizmo);
 
             harmony.Patch(original: AccessTools.Method(type: typeof(Bill), name: nameof(Bill.GetUniqueLoadID)), prefix: null,
                 postfix: new HarmonyMethod(type: typeof(ExportAgency), name: nameof(BillUniqueIdPostfix)));
