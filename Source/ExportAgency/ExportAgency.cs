@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace ExportAgency
 {
+    using System.Reflection;
     using System.Reflection.Emit;
 
     public enum ExportType : byte
@@ -26,20 +27,29 @@ namespace ExportAgency
             HarmonyInstance harmony     = HarmonyInstance.Create(id: "rimworld.erdelf.exportAgency");
             HarmonyMethod   exportGizmo = new HarmonyMethod(type: typeof(ExportAgency), name: nameof(ExportGizmos));
 
-        #region Bills
+            #region Bills
 
             foreach (Type t in GenTypes.AllTypes.Where(predicate: t => t.GetInterfaces().Contains(value: typeof(IBillGiver)) && !t.IsInterface && !t.IsAbstract))
-                harmony.Patch(original: AccessTools.Method(type: t, name: nameof(Thing.GetGizmos)), prefix: null, postfix: exportGizmo);
+            {
+                MethodInfo original = AccessTools.Method(type: t, name: nameof(Thing.GetGizmos));
+                if(original?.DeclaringType == t)
+                    harmony.Patch(original: original, prefix: null, postfix: exportGizmo);
+            }
+
             harmony.Patch(original: AccessTools.Method(type: typeof(Bill), name: nameof(Bill.GetUniqueLoadID)), prefix: null,
                 postfix: new HarmonyMethod(type: typeof(ExportAgency), name: nameof(BillUniqueIdPostfix)));
 
-        #endregion
+            #endregion
 
-        #region StorageSettings
+            #region StorageSettings
 
             foreach (Type t in GenTypes.AllTypes.Where(predicate: t =>
-                t.GetInterfaces().Contains(value: typeof(IStoreSettingsParent)) && !t.IsInterface && !t.IsAbstract && AccessTools.Method(type: t, name: nameof(Thing.GetGizmos)) != null))
-                harmony.Patch(original: AccessTools.Method(type: t, name: nameof(Thing.GetGizmos)), prefix: null, postfix: exportGizmo);
+                t.GetInterfaces().Contains(value: typeof(IStoreSettingsParent)) && !t.IsInterface && !t.IsAbstract))
+            {
+                MethodInfo original = AccessTools.Method(type: t, name: nameof(Thing.GetGizmos));
+                if (original?.DeclaringType == t)
+                    harmony.Patch(original: original, prefix: null, postfix: exportGizmo);
+            }
 
         #endregion
 
