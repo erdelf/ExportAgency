@@ -174,8 +174,11 @@ namespace ExportAgency
             foreach (ExposableList<IExposable> li in ExportAgencyMod.Settings.dictionary[key: ExportType.DRUGPOLICY])
             {
                 DrugPolicy policy = __instance.MakeNewDrugPolicy();
+                int x = 0;
                 for (int i = 0; i < li.Count; i++)
-                    policy[index: i] = li[index: i].exposable as DrugPolicyEntry;
+                    if(li[index: i].exposable is DrugPolicyEntry dpe)
+                        if(dpe.drug != null)
+                            policy[index: x++] = dpe;
                 policy.label  = li.Name;
             }
         }
