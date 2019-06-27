@@ -49,7 +49,7 @@ namespace ExportAgency
 
         #endregion
 
-        #region Outfits
+            #region Outfits
 
             harmony.Patch(original: AccessTools.Method(type: typeof(Dialog_ManageOutfits), name: nameof(Dialog_ManageOutfits.PreClose)), postfix: new HarmonyMethod(type: typeof(ExportAgency), name: nameof(OutfitDialogClosePostfix)));
 
@@ -220,7 +220,7 @@ namespace ExportAgency
 
     #endregion
 
-    #region Bills
+        #region Bills
 
         public static void BillUniqueIdPostfix(Bill __instance, ref string __result)
         {
@@ -248,9 +248,9 @@ namespace ExportAgency
                 return bill;
             }).OfType<IExposable>()));
 
-    #endregion
+        #endregion
 
-    #region StorageSettings
+        #region StorageSettings
 
         private static void PasteStorageSettings(IStoreSettingsParent storeParent, StorageSettings settings) =>
             storeParent.GetStoreSettings().CopyFrom(other: settings);
@@ -263,7 +263,7 @@ namespace ExportAgency
                 list: new List<IExposable> {set}));
         }
 
-    #endregion
+        #endregion
 
         public static void Export(ExportType key, IEnumerable<IExposable> list, string name)
         {
@@ -321,13 +321,15 @@ namespace ExportAgency
             try
             {
                 Scribe_Deep.Look(target: ref this.exposable, label: "exposable");
-                this.resolvable = true;
+                this.resolvable = this.exposable != null;
             }
             catch
             {
                 this.resolvable = false;
-                Log.Message(text: $"Found unresolvable {typeof(T).FullName} in exported List");
             }
+
+            if(!this.resolvable)
+                Log.Message(text: $"Found unresolvable {typeof(T).FullName} in exported List");
         }
 
         public static implicit operator T(ExposableListItem<T> exp) => exp.exposable;
