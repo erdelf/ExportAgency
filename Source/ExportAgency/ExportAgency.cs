@@ -1,4 +1,4 @@
-﻿using Harmony;
+﻿using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,8 +24,8 @@ namespace ExportAgency
     {
         static ExportAgency()
         {
-            HarmonyInstance harmony     = HarmonyInstance.Create(id: "rimworld.erdelf.exportAgency");
-            HarmonyMethod   exportGizmo = new HarmonyMethod(type: typeof(ExportAgency), name: nameof(ExportGizmos));
+            Harmony harmony     = new Harmony(id: "rimworld.erdelf.exportAgency");
+            HarmonyMethod   exportGizmo = new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(ExportGizmos));
 
             #region Bills
 
@@ -33,14 +33,14 @@ namespace ExportAgency
             harmony.Patch(original: AccessTools.Method(type: typeof(ThingWithComps), name: nameof(Thing.GetGizmos)), prefix: null, postfix: exportGizmo);
 
             harmony.Patch(original: AccessTools.Method(type: typeof(Bill), name: nameof(Bill.GetUniqueLoadID)), prefix: null,
-                postfix: new HarmonyMethod(type: typeof(ExportAgency), name: nameof(BillUniqueIdPostfix)));
+                postfix: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(BillUniqueIdPostfix)));
 
             #endregion
 
             #region StorageSettings
 
             foreach (Type t in GenTypes.AllTypes.Where(predicate: t =>
-                t.GetInterfaces().Contains(value: typeof(IStoreSettingsParent)) && !t.IsInterface && !t.IsAbstract))
+                                                                      t.GetInterfaces().Contains(value: typeof(IStoreSettingsParent)) && !t.IsInterface && !t.IsAbstract))
             {
                 MethodInfo original = AccessTools.Method(type: t, name: nameof(Thing.GetGizmos));
                 if (original?.DeclaringType == t)
@@ -51,23 +51,23 @@ namespace ExportAgency
 
             #region Outfits
 
-            harmony.Patch(original: AccessTools.Method(type: typeof(Dialog_ManageOutfits), name: nameof(Dialog_ManageOutfits.PreClose)), postfix: new HarmonyMethod(type: typeof(ExportAgency), name: nameof(OutfitDialogClosePostfix)));
+            harmony.Patch(original: AccessTools.Method(type: typeof(Dialog_ManageOutfits), name: nameof(Dialog_ManageOutfits.PreClose)), postfix: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(OutfitDialogClosePostfix)));
 
-            harmony.Patch(original: AccessTools.Constructor(type: typeof(OutfitDatabase)), postfix: new HarmonyMethod(type: typeof(ExportAgency), name: nameof(OutfitDatabasePostfix)));
+            harmony.Patch(original: AccessTools.Constructor(type: typeof(OutfitDatabase)), postfix: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(OutfitDatabasePostfix)));
 
             #endregion
 
             #region DrugPolicies
 
-            harmony.Patch(original: AccessTools.Method(type: typeof(Dialog_ManageDrugPolicies), name: nameof(Dialog_ManageDrugPolicies.PreClose)), postfix: new HarmonyMethod(type: typeof(ExportAgency), name: nameof(DrugPolicyDialogClosePostfix)));
+            harmony.Patch(original: AccessTools.Method(type: typeof(Dialog_ManageDrugPolicies), name: nameof(Dialog_ManageDrugPolicies.PreClose)), postfix: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(DrugPolicyDialogClosePostfix)));
 
-            harmony.Patch(original: AccessTools.Constructor(type: typeof(DrugPolicyDatabase)), postfix: new HarmonyMethod(type: typeof(ExportAgency), name: nameof(DrugPolicyDatabasePostfix)));
+            harmony.Patch(original: AccessTools.Constructor(type: typeof(DrugPolicyDatabase)), postfix: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(DrugPolicyDatabasePostfix)));
 
             harmony.Patch(original: AccessTools.Method(type: typeof(Dialog_ManageDrugPolicies), name: nameof(Dialog_ManageDrugPolicies.DoWindowContents)),
-                transpiler: new HarmonyMethod(type: typeof(ExportAgency), name: nameof(DrugPolicyManageTranspiler)));
+                transpiler: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(DrugPolicyManageTranspiler)));
 
             harmony.Patch(original: AccessTools.Method(type: typeof(DrugPolicyDatabase), name: nameof(DrugPolicyDatabase.DefaultDrugPolicy)),
-                postfix: new HarmonyMethod(type: typeof(ExportAgency), name: nameof(DefaultDrugPolicyPostfix)));
+                postfix: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(DefaultDrugPolicyPostfix)));
             #endregion
 
             // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
@@ -83,16 +83,16 @@ namespace ExportAgency
             if (__instance is IBillGiver billGiver)
             {
                 if (billGiver.BillStack.Bills.Any())
-                    __result = __result.Add(item: new Command_Action
+                    __result = __result.AddItem(item: new Command_Action
                     {
                         action = () =>
-                            ExportBillStack(stack: billGiver.BillStack),
+                                     ExportBillStack(stack: billGiver.BillStack),
                         defaultLabel = "Export",
                         icon         = EXPORT_TEXTURE
                     });
                 if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.BILL) && 
                     ExportAgencyMod.Settings.dictionary[key: ExportType.BILL].Any(predicate: li => li.exposable.Select(exp => (Bill) exp.exposable).Any(predicate: bi => ((Thing) __instance).def.AllRecipes.Contains(item: bi.recipe))))
-                    __result = __result.Add(item: new Command_Action
+                    __result = __result.AddItem(item: new Command_Action
                     {
                         action = () => Find.WindowStack.Add(window: new FloatMenu(options: ExportAgencyMod.Settings.dictionary[key: ExportType.BILL]
                            .Where(predicate: li => li.exposable.Select(exp => (Bill) exp.exposable).Any(predicate: bi => ((Thing) __instance).def.AllRecipes.Contains(item: bi.recipe)))
@@ -105,14 +105,14 @@ namespace ExportAgency
             if (__instance is IStoreSettingsParent storeParent)
             {
                 if (!storeParent.StorageTabVisible) return;
-                __result = __result.Add(item: new Command_Action
+                __result = __result.AddItem(item: new Command_Action
                 {
                     action       = () => ExportStorageSettings(settings: storeParent.GetStoreSettings()),
                     defaultLabel = "Copy",
                     icon         = TexCommand.Attack
                 });
                 if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.STORAGE_SETTINGS))
-                    __result = __result.Add(item: new Command_Action
+                    __result = __result.AddItem(item: new Command_Action
                     {
                         action = () =>
                         {
@@ -183,7 +183,7 @@ namespace ExportAgency
             }
         }
 
-        public static void DrugPolicyDialogClosePostfix(Dialog_ManageDrugPolicies __instance)
+        public static void DrugPolicyDialogClosePostfix()
         {
             if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.DRUGPOLICY))
                 ExportAgencyMod.Settings.dictionary[key: ExportType.DRUGPOLICY].Clear();
@@ -209,7 +209,7 @@ namespace ExportAgency
             }
         }
 
-        public static void OutfitDialogClosePostfix(Dialog_ManageOutfits __instance)
+        public static void OutfitDialogClosePostfix()
         {
             if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.OUTFIT))
                 ExportAgencyMod.Settings.dictionary[key: ExportType.OUTFIT].Clear();
