@@ -177,7 +177,7 @@ namespace ExportAgency
                 int x = 0;
                 for (int i = 0; i < li.Count; i++)
                     if(li[index: i].exposable is DrugPolicyEntry dpe)
-                        if(dpe.drug != null)
+                        if(dpe.drug != null && policy.Count < x-1)
                             policy[index: x++] = dpe;
                 policy.label  = li.Name;
             }
