@@ -48,4 +48,8 @@ Network Trash Folder
 Temporary Items
 .apdisk
 *.ruleset
-/Source/packages/Lib.Harmony.2.0.0.6
+/Source/packages/
+/Source/packages/*
+/Assemblies/
+/Assemblies/*
+.directory
