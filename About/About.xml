@@ -7,20 +7,19 @@
 		<li>1.1</li>
 	</supportedVersions>
 	<packageId>erdelf.ExportAgency</packageId>
-	<description>
-	You ever get tired of setting up bills, outfits, storage settings etc. every new game ?
-	Well then this mod is for you!
-	
-	<![CDATA[<size=24><b>Features:</b></size>
-    • Export bills from any production <i>[1]</i>
-    • Import bills from any production<i>[2]</i>
+	<description><![CDATA[You ever get tired of setting up bills, outfits, storage settings etc. every new game ?
+Well then this mod is for you!
+
+<size=24><b>Features:</b></size>
+    • Export bills from any production.<i>[1]</i>
+    • Import bills from any production.<i>[2]</i>
     • Export Store zone settings.
     • Import Store zone settings. <i>[2]</i>
-    • All Outfits and Drug policies are shared accross Colonies using mod <[3]>
+    • All Outfits and Drug policies are shared accross Colonies using mod <i>[3]</i>
 
 <i>1: Button does not display unless bills are populated.</i>
 <i>2: Button does not display unless previous export(s) exist.</i>
-<i>3: Must have at least loaded game with mod and edited config to ensure config saves.
+<i>3: Must have at least loaded game with mod and edited config to ensure config saves.</i>
 <size=24><b>Contributors:</b></size>
     • Halno (Textures and Preview image)
 
