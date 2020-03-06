@@ -108,8 +108,8 @@ namespace ExportAgency
                 __result = __result.AddItem(item: new Command_Action
                 {
                     action       = () => ExportStorageSettings(settings: storeParent.GetStoreSettings()),
-                    defaultLabel = "Copy",
-                    icon         = TexCommand.Attack
+                    defaultLabel = "Export",
+                    icon         = EXPORT_TEXTURE
                 });
                 if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.STORAGE_SETTINGS))
                     __result = __result.AddItem(item: new Command_Action
@@ -120,8 +120,8 @@ namespace ExportAgency
                                .Select(selector: li => new FloatMenuOption(label: li.exposable.Name, action: () =>
                                     PasteStorageSettings(storeParent: storeParent, settings: (StorageSettings) li.exposable.First().exposable))).ToList()));
                         },
-                        defaultLabel = "Paste",
-                        icon         = TexCommand.AttackMelee
+                        defaultLabel = "Import",
+                        icon         = IMPORT_TEXTURE
                     });
             }
         }
