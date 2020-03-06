@@ -8,13 +8,41 @@
 	</supportedVersions>
 	<packageId>erdelf.ExportAgency</packageId>
 	<description>
-You ever get tired of setting up bills, outfits, storage settings etc. every new game ?
-Well then this mod is for you here.
+	You ever get tired of setting up bills, outfits, storage settings etc. every new game ?
+	Well then this mod is for you!
+	
+	<![CDATA[<size=24><b>Features:</b></size>
+    • Export bills from any production <i>[1]</i>
+    • Import bills from any production<i>[2]</i>
+    • Export Store zone settings.
+    • Import Store zone settings. <i>[2]</i>
+    • All Outfits and Drug policies are shared accross Colonies using mod <[3]>
 
-Export for Bills (including medical operations) and Storage Settings
-DrugPolicies and Outfits are now shared among every Save.
+<i>1: Button does not display unless bills are populated.</i>
+<i>2: Button does not display unless previous export(s) exist.</i>
+<i>3: Must have at least loaded game with mod and edited config to ensure config saves.
+<size=24><b>Contributors:</b></size>
+    • Halno (Textures and Preview image)
 
-
-Textures and Preview image done by Halno.
+<size=24><b>Version:</b></size> 1.0.1]]>
 	</description>
+	<modDependenciesByVersion>
+		<v1.0/>
+		<v1.1>
+		<li>
+			<packageId>brrainz.harmony</packageId>
+			<displayName>Harmony</displayName>
+			<steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
+			<downloadUrl>https://github.com/pardeike/HarmonyRimWorld/releases/latest</downloadUrl>
+		</li>
+		</v1.1>
+	</modDependenciesByVersion>
+	<incompatibleWith/>
+	<loadBefore/>
+	<loadAfterByVersion>
+		<v1.0/>
+		<v1.1>
+			<li>brrainz.harmony</li>
+		</v1.1>
+	</loadAfterByVersion>
 </ModMetaData>
