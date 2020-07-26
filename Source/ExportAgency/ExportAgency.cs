@@ -131,7 +131,7 @@ namespace ExportAgency
 
         // ReSharper disable once RedundantAssignment
         public static void DefaultDrugPolicyPostfix(DrugPolicyDatabase __instance, ref DrugPolicy __result) => 
-            __result = __instance.AllPolicies[index: ExportAgencyMod.Settings.defaultDrugPolicyIndex];
+            __result = __instance.AllPolicies[index: ExportAgencyMod.Settings.defaultDrugPolicyIndex >= __instance.AllPolicies.Count ? 0 : ExportAgencyMod.Settings.defaultDrugPolicyIndex];
 
         public static IEnumerable<CodeInstruction> DrugPolicyManageTranspiler(IEnumerable<CodeInstruction> instructions)
         {
