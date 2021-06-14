@@ -78,41 +78,43 @@ namespace ExportAgency
 
         public static readonly Texture2D EXPORT_TEXTURE = ContentFinder<Texture2D>.Get(itemPath: "ExportAgency/Export");
 
-        public static void ExportGizmos(object __instance, ref IEnumerable<Gizmo> __result)
+        public static IEnumerable<Gizmo> ExportGizmos(IEnumerable<Gizmo> __result, object __instance)
         {
+            foreach (var gizmo in __result) yield return gizmo;
+
             if (__instance is IBillGiver billGiver)
             {
                 if (billGiver.BillStack.Bills.Any())
-                    __result = __result.AddItem(item: new Command_Action
+                    yield return new Command_Action
                     {
                         action = () =>
                                      ExportBillStack(stack: billGiver.BillStack),
                         defaultLabel = "Export",
                         icon         = EXPORT_TEXTURE
-                    });
+                    };
                 if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.BILL) && 
                     ExportAgencyMod.Settings.dictionary[key: ExportType.BILL].Any(predicate: li => li.exposable.Select(exp => (Bill) exp.exposable).Any(predicate: bi => ((Thing) __instance).def.AllRecipes.Contains(item: bi.recipe))))
-                    __result = __result.AddItem(item: new Command_Action
-                    {
-                        action = () => Find.WindowStack.Add(window: new FloatMenu(options: ExportAgencyMod.Settings.dictionary[key: ExportType.BILL]
+                    yield return new Command_Action
+                {
+                    action = () => Find.WindowStack.Add(window: new FloatMenu(options: ExportAgencyMod.Settings.dictionary[key: ExportType.BILL]
                            .Where(predicate: li => li.exposable.Select(exp => (Bill) exp.exposable).Any(predicate: bi => ((Thing) __instance).def.AllRecipes.Contains(item: bi.recipe)))
                            .Select(selector: li => new FloatMenuOption(label: li.exposable.Name, action: () => PasteBillStack(billGiver: billGiver, bills: li.exposable.Select(exp => exp.exposable)))).ToList())),
                         defaultLabel = "Import",
                         icon         = IMPORT_TEXTURE
-                    });
+                    };
             }
 
             if (__instance is IStoreSettingsParent storeParent)
             {
-                if (!storeParent.StorageTabVisible) return;
-                __result = __result.AddItem(item: new Command_Action
+                if (storeParent.StorageTabVisible)
+                    yield return new Command_Action
                 {
                     action       = () => ExportStorageSettings(settings: storeParent.GetStoreSettings()),
                     defaultLabel = "Copy",
                     icon         = TexCommand.Attack
-                });
+                };
                 if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.STORAGE_SETTINGS))
-                    __result = __result.AddItem(item: new Command_Action
+                    yield return new Command_Action
                     {
                         action = () =>
                         {
@@ -122,10 +124,9 @@ namespace ExportAgency
                         },
                         defaultLabel = "Paste",
                         icon         = TexCommand.AttackMelee
-                    });
+                    };
             }
         }
-
 
         #region Drugs
 
@@ -143,6 +144,7 @@ namespace ExportAgency
                 // ReSharper disable once RedundantCast
                 if (index < instructionList.Count - 1 && instructionList[index: index + 1].operand == (object) "DeleteDrugPolicy")
                 {
+                    yield return instruction;
                     yield return new CodeInstruction(opcode: OpCodes.Ldloc_0);
                     yield return new CodeInstruction(opcode: OpCodes.Ldc_R4, operand: 0.0f);
                     yield return new CodeInstruction(opcode: OpCodes.Ldc_R4, operand: 150f);
@@ -153,8 +155,10 @@ namespace ExportAgency
                     yield return new CodeInstruction(opcode: OpCodes.Call, 
                         operand: AccessTools.Method(type: typeof(ExportAgency), name: nameof(NewDefaultDrugPolicy)));
                 }
-
-                yield return instruction;
+                else
+                {
+                    yield return instruction;
+                }
             }
         }
 
