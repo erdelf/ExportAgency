@@ -144,6 +144,7 @@ namespace ExportAgency
                 // ReSharper disable once RedundantCast
                 if (index < instructionList.Count - 1 && instructionList[index: index + 1].operand == (object) "DeleteDrugPolicy")
                 {
+                    yield return instruction;
                     yield return new CodeInstruction(opcode: OpCodes.Ldloc_0);
                     yield return new CodeInstruction(opcode: OpCodes.Ldc_R4, operand: 0.0f);
                     yield return new CodeInstruction(opcode: OpCodes.Ldc_R4, operand: 150f);
@@ -154,8 +155,10 @@ namespace ExportAgency
                     yield return new CodeInstruction(opcode: OpCodes.Call, 
                         operand: AccessTools.Method(type: typeof(ExportAgency), name: nameof(NewDefaultDrugPolicy)));
                 }
-
-                yield return instruction;
+                else
+                {
+                    yield return instruction;
+                }
             }
         }
 
