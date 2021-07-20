@@ -243,7 +243,7 @@ namespace ExportAgency
             Find.WindowStack.Add(window: new Dialog_RenameExportName(key: ExportType.BILL, list: stack.Bills.Select(selector: bi =>
             {
                 Bill bill = bi.Clone();
-                bill.pawnRestriction = null;
+                bill.SetAnyPawnRestriction();
                 Traverse.Create(root: bill).Field<int>(name: "loadID").Value = int.MinValue;
                 return bill;
             }).OfType<IExposable>()));
