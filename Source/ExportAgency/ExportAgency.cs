@@ -111,12 +111,12 @@ namespace ExportAgency
                     defaultLabel = "Copy",
                     icon         = TexCommand.Attack
                 });
-                if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.STORAGE_SETTINGS))
+                if (ExportAgencyMod.Settings.dictionary.TryGetValue(ExportType.STORAGE_SETTINGS, out ExposableList<ExposableList<IExposable>> storageList))
                     __result = __result.AddItem(item: new Command_Action
                     {
                         action = () =>
                         {
-                            Find.WindowStack.Add(window: new FloatMenu(options: ExportAgencyMod.Settings.dictionary[key: ExportType.STORAGE_SETTINGS]
+                            Find.WindowStack.Add(window: new FloatMenu(options: storageList
                                .Select(selector: li => new FloatMenuOption(label: li.exposable.Name, action: () =>
                                     PasteStorageSettings(storeParent: storeParent, settings: (StorageSettings) li.exposable.First().exposable))).ToList()));
                         },
@@ -185,8 +185,8 @@ namespace ExportAgency
 
         public static void DrugPolicyDialogClosePostfix()
         {
-            if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.DRUGPOLICY))
-                ExportAgencyMod.Settings.dictionary[key: ExportType.DRUGPOLICY].Clear();
+            if (ExportAgencyMod.Settings.dictionary.TryGetValue(ExportType.DRUGPOLICY, out ExposableList<ExposableList<IExposable>> drugPolicy))
+                drugPolicy.Clear();
 
             foreach (DrugPolicy policy in Current.Game.drugPolicyDatabase.AllPolicies)
                 Export(key: ExportType.DRUGPOLICY, 
@@ -211,8 +211,8 @@ namespace ExportAgency
 
         public static void OutfitDialogClosePostfix()
         {
-            if (ExportAgencyMod.Settings.dictionary.ContainsKey(key: ExportType.OUTFIT))
-                ExportAgencyMod.Settings.dictionary[key: ExportType.OUTFIT].Clear();
+            if (ExportAgencyMod.Settings.dictionary.TryGetValue(ExportType.OUTFIT, out ExposableList<ExposableList<IExposable>> outfitpolicy))
+                outfitpolicy.Clear();
 
             foreach (Outfit outfit in Current.Game.outfitDatabase.AllOutfits)
                 Export(key: ExportType.OUTFIT, list: new IExposable[] { outfit.filter }, name: outfit.label);

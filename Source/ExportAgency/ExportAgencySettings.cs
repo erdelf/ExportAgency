@@ -30,7 +30,7 @@ namespace ExportAgency
 
         public override string SettingsCategory() => "Export Agency";
 
-        public static ExportSettings Settings => settings ?? (settings = instance.GetSettings<ExportSettings>());
+        public static ExportSettings Settings => settings ??= instance.GetSettings<ExportSettings>();
 
         public ExportAgencyMod(ModContentPack content) : base(content: content) => instance = this;
 
@@ -53,7 +53,7 @@ namespace ExportAgency
             for (int i = 2; i < exposableList.Count+2; i++)
             {
                 Widgets.DrawLineHorizontal(x: 0, y: i * 25f, length: inRect.width-18f);
-                Widgets.Label(rect: new Rect(x: 0, y: i * 25f + 2.5f, width: inRect.width *0.3f, height: 20f), 
+                Widgets.Label(rect: new Rect(x: 0, y: i * 25f + 2.5f, width: inRect.width *0.3f, height: 24f), 
                     label: exposableList[index: i-2].exposable.Name);
                 if (!Widgets.ButtonImage(butRect: new Rect(x: inRect.width - 18f - 20f, y: i * 25f + 2.5f, width: 20f, height: 20f),
                         tex: TexCommand.RemoveRoutePlannerWaypoint)) continue;
