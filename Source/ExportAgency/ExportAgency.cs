@@ -10,6 +10,7 @@ namespace ExportAgency
 {
     using System.Reflection;
     using System.Reflection.Emit;
+    using System.Xml.Linq;
 
     public enum ExportType : byte
     {
@@ -24,8 +25,8 @@ namespace ExportAgency
     {
         static ExportAgency()
         {
-            Harmony harmony     = new Harmony(id: "rimworld.erdelf.exportAgency");
-            HarmonyMethod   exportGizmo = new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(ExportGizmos));
+            Harmony       harmony     = new(id: "rimworld.erdelf.exportAgency");
+            HarmonyMethod exportGizmo = new(methodType: typeof(ExportAgency), methodName: nameof(ExportGizmos));
 
             #region Bills
 
@@ -39,33 +40,28 @@ namespace ExportAgency
 
             #region StorageSettings
 
-            foreach (Type t in GenTypes.AllTypes.Where(predicate: t =>
-                                                                      t.GetInterfaces().Contains(value: typeof(IStoreSettingsParent)) && !t.IsInterface && !t.IsAbstract))
+            foreach (Type t in GenTypes.AllTypes.Where(predicate: t => t.GetInterfaces().Contains(value: typeof(IStoreSettingsParent)) && !t.IsInterface && !t.IsAbstract))
             {
                 MethodInfo original = AccessTools.Method(type: t, name: nameof(Thing.GetGizmos));
                 if (original?.DeclaringType == t)
-                    harmony.Patch(original: original, prefix: null, postfix: exportGizmo);
+                    harmony.Patch(original, postfix: exportGizmo);
             }
 
         #endregion
 
             #region Outfits
-
-            harmony.Patch(original: AccessTools.Method(type: typeof(Dialog_ManageOutfits), name: nameof(Dialog_ManageOutfits.PreClose)), postfix: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(OutfitDialogClosePostfix)));
-
             harmony.Patch(original: AccessTools.Constructor(type: typeof(OutfitDatabase)), postfix: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(OutfitDatabasePostfix)));
-
             #endregion
+
+            harmony.Patch(original: AccessTools.Method(type: typeof(Window), name: nameof(Window.PreClose)), postfix: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(DialogClosePostfix)));
 
             #region DrugPolicies
 
-            harmony.Patch(original: AccessTools.Method(type: typeof(Dialog_ManageDrugPolicies), name: nameof(Dialog_ManageDrugPolicies.PreClose)), postfix: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(DrugPolicyDialogClosePostfix)));
-
             harmony.Patch(original: AccessTools.Constructor(type: typeof(DrugPolicyDatabase)), postfix: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(DrugPolicyDatabasePostfix)));
-
-            harmony.Patch(original: AccessTools.Method(type: typeof(Dialog_ManageDrugPolicies), name: nameof(Dialog_ManageDrugPolicies.DoWindowContents)),
-                transpiler: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(DrugPolicyManageTranspiler)));
-
+            
+            harmony.Patch(original: AccessTools.Method(type: typeof(Dialog_ManagePolicies<DrugPolicy>), name: nameof(Dialog_ManageDrugPolicies.DoWindowContents)), 
+                          transpiler: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(DrugPolicyManageTranspiler)));
+            
             harmony.Patch(original: AccessTools.Method(type: typeof(DrugPolicyDatabase), name: nameof(DrugPolicyDatabase.DefaultDrugPolicy)),
                 postfix: new HarmonyMethod(methodType: typeof(ExportAgency), methodName: nameof(DefaultDrugPolicyPostfix)));
             #endregion
@@ -104,13 +100,16 @@ namespace ExportAgency
 
             if (__instance is IStoreSettingsParent storeParent)
             {
-                if (!storeParent.StorageTabVisible) return;
+                if (!storeParent.StorageTabVisible) 
+                    return;
+
                 __result = __result.AddItem(item: new Command_Action
                 {
                     action       = () => ExportStorageSettings(settings: storeParent.GetStoreSettings()),
                     defaultLabel = "Copy",
                     icon         = TexCommand.Attack
                 });
+
                 if (ExportAgencyMod.Settings.dictionary.TryGetValue(ExportType.STORAGE_SETTINGS, out ExposableList<ExposableList<IExposable>> storageList))
                     __result = __result.AddItem(item: new Command_Action
                     {
@@ -133,36 +132,41 @@ namespace ExportAgency
         public static void DefaultDrugPolicyPostfix(DrugPolicyDatabase __instance, ref DrugPolicy __result) => 
             __result = __instance.AllPolicies[index: ExportAgencyMod.Settings.defaultDrugPolicyIndex >= __instance.AllPolicies.Count ? 0 : ExportAgencyMod.Settings.defaultDrugPolicyIndex];
 
-        public static IEnumerable<CodeInstruction> DrugPolicyManageTranspiler(IEnumerable<CodeInstruction> instructions)
+        public static IEnumerable<CodeInstruction> DrugPolicyManageTranspiler(IEnumerable<CodeInstruction> instructions, ILGenerator ilg)
         {
+            Label skipLabel = ilg.DefineLabel();
+
+            FieldInfo textureInfo = AccessTools.Field(typeof(TexUI), nameof(TexUI.RenameTex));
+
             List<CodeInstruction> instructionList = instructions.ToList();
             for (int index = 0; index < instructionList.Count; index++)
             {
-                CodeInstruction instruction = instructionList[index: index];
+                CodeInstruction instruction = instructionList[index];
+                yield return instruction;
 
                 // ReSharper disable once RedundantCast
-                if (index < instructionList.Count - 1 && instructionList[index: index + 1].operand == (object) "DeleteDrugPolicy")
+                if (index < instructionList.Count - 1 && instructionList[index + 1].OperandIs(textureInfo))
                 {
-                    yield return new CodeInstruction(opcode: OpCodes.Ldloc_0);
-                    yield return new CodeInstruction(opcode: OpCodes.Ldc_R4, operand: 0.0f);
-                    yield return new CodeInstruction(opcode: OpCodes.Ldc_R4, operand: 150f);
-                    yield return new CodeInstruction(opcode: OpCodes.Ldc_R4, operand: 35f);
-                    yield return new CodeInstruction(opcode: OpCodes.Ldarg_0);
-                    yield return new CodeInstruction(opcode: OpCodes.Call, 
-                        operand: AccessTools.Property(type: typeof(Dialog_ManageDrugPolicies), name: "SelectedPolicy").GetGetMethod(nonPublic: true));
-                    yield return new CodeInstruction(opcode: OpCodes.Call, 
-                        operand: AccessTools.Method(type: typeof(ExportAgency), name: nameof(NewDefaultDrugPolicy)));
-                }
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Isinst,  typeof(Dialog_ManagePolicies<DrugPolicy>));
+                    yield return new CodeInstruction(OpCodes.Brfalse, skipLabel);
 
-                yield return instruction;
+                    yield return new CodeInstruction(OpCodes.Dup);
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(Dialog_ManagePolicies<DrugPolicy>), "SelectedPolicy"));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(ExportAgency), nameof(NewDefaultDrugPolicy)));
+
+                    instructionList[index+1].labels.Add(skipLabel);
+                }
             }
         }
 
-        public static void NewDefaultDrugPolicy(float x, float y, float w, float h, DrugPolicy selected)
+        public static void NewDefaultDrugPolicy(Rect x, DrugPolicy selected)
         {
-            if (selected == null) return;
+            if (selected == null) 
+                return;
 
-            if (Widgets.ButtonText(rect: new Rect(x: x+10, y: y, width: w, height: h), label: "NewDefaultDrugPolicy".Translate()))
+            if (Widgets.ButtonText(rect: new Rect(x.x - 160, x.y, 150f, x.height), label: "NewDefaultDrugPolicy".Translate()))
                 ExportAgencyMod.Settings.defaultDrugPolicyIndex = Current.Game.drugPolicyDatabase.AllPolicies.IndexOf(item: selected);
         }
 
@@ -195,6 +199,22 @@ namespace ExportAgency
 
         #endregion
 
+
+        public static void DialogClosePostfix(Window __instance)
+        {
+            switch (__instance)
+            {
+                case Dialog_ManagePolicies<ApparelPolicy>:
+                    OutfitDialogClosePostfix();
+                    break;
+                case Dialog_ManagePolicies<DrugPolicy>:
+                    DrugPolicyDialogClosePostfix();
+                    break;
+            }
+
+        }
+
+
         #region Outfits
 
         public static void OutfitDatabasePostfix(OutfitDatabase __instance)
@@ -203,7 +223,7 @@ namespace ExportAgency
             __instance.AllOutfits.Clear();
             foreach (ExposableList<IExposable> li in ExportAgencyMod.Settings.dictionary[key: ExportType.OUTFIT])
             {
-                Outfit outfit = __instance.MakeNewOutfit();
+                ApparelPolicy outfit = __instance.MakeNewOutfit();
                 outfit.filter = (ThingFilter) li.First().exposable;
                 outfit.label  = li.Name;
             }
@@ -214,7 +234,7 @@ namespace ExportAgency
             if (ExportAgencyMod.Settings.dictionary.TryGetValue(ExportType.OUTFIT, out ExposableList<ExposableList<IExposable>> outfitpolicy))
                 outfitpolicy.Clear();
 
-            foreach (Outfit outfit in Current.Game.outfitDatabase.AllOutfits)
+            foreach (ApparelPolicy outfit in Current.Game.outfitDatabase.AllOutfits)
                 Export(key: ExportType.OUTFIT, list: new IExposable[] { outfit.filter }, name: outfit.label);
         }
 
@@ -257,10 +277,9 @@ namespace ExportAgency
 
         public static void ExportStorageSettings(StorageSettings settings)
         {
-            StorageSettings set = new StorageSettings();
+            StorageSettings set = new();
             set.CopyFrom(other: settings);
-            Find.WindowStack.Add(window: new Dialog_RenameExportName(key: ExportType.STORAGE_SETTINGS,
-                list: new List<IExposable> {set}));
+            Find.WindowStack.Add(window: new Dialog_RenameExportName(key: ExportType.STORAGE_SETTINGS, list: new List<IExposable> {set}));
         }
 
         #endregion
@@ -268,10 +287,11 @@ namespace ExportAgency
         public static void Export(ExportType key, IEnumerable<IExposable> list, string name)
         {
             IEnumerable<IExposable> exposables = list as IExposable[] ?? list.ToArray();
-            if (!exposables.Any()) return;
+            if (!exposables.Any()) 
+                return;
 
             if (!ExportAgencyMod.Settings.dictionary.ContainsKey(key: key))
-                ExportAgencyMod.Settings.dictionary.Add(key: key, value: new ExposableList<ExposableList<IExposable>>());
+                ExportAgencyMod.Settings.dictionary.Add(key: key, value: []);
 
             ExportAgencyMod.Settings.dictionary[key: key].Add(item: new ExposableList<IExposable>(exposables: exposables) {Name = name});
             ExportAgencyMod.instance.WriteSettings();
@@ -335,18 +355,34 @@ namespace ExportAgency
         public static implicit operator T(ExposableListItem<T> exp) => exp.exposable;
     }
 
-    internal class Dialog_RenameExportName : Dialog_Rename
+    public class RenamableTempObject : IRenameable
     {
+        private string renamableLabel;
+        public string RenamableLabel
+        {
+            get => this.renamableLabel;
+            set
+            {
+                this.renamableLabel = value;
+                ExportAgency.Export(key: this.key, list: this.list, name: value);
+            }
+        }
+
+        public string BaseLabel      { get; }
+        public string InspectLabel   { get; }
+
         private readonly ExportType              key;
         private readonly IEnumerable<IExposable> list;
 
-        public Dialog_RenameExportName(ExportType key, IEnumerable<IExposable> list)
+        public RenamableTempObject(ExportType key, IEnumerable<IExposable> list)
         {
-            this.key     = key;
-            this.list    = list;
-            this.curName = key.ToString() + (ExportAgencyMod.Settings.dictionary.ContainsKey(key: key + 0) ? ExportAgencyMod.Settings.dictionary[key: key].Count : 0);
-        }
+            this.list = list;
+            this.key  = key;
 
-        protected override void SetName(string name) => ExportAgency.Export(key: this.key, list: this.list, name: name);
+            this.RenamableLabel = key.ToString() + (ExportAgencyMod.Settings.dictionary.ContainsKey(key: key + 0) ? ExportAgencyMod.Settings.dictionary[key: key].Count : 0);
+        }
     }
+
+
+    internal class Dialog_RenameExportName(ExportType key, IEnumerable<IExposable> list) : Dialog_Rename<RenamableTempObject>(new RenamableTempObject(key, list));
 }
